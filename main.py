@@ -22,12 +22,12 @@ def validate_uuid(u):
 
 def validate_client_id(client_id):
     url = f"{USERS_API_BASE_URL}/users/{client_id}"
-
-    response = requests.get(url)
-
-    if response.status_code == 200:
-        return True
-    else:
+    try:
+        response = requests.get(url, timeout=5)
+        print("validate_client_id:", response.status_code, response.text)
+        return response.status_code == 200
+    except requests.RequestException as e:
+        print("Error validating client_id:", e)
         return False
     
 @app.route('/transacao', methods=['GET'])
@@ -59,6 +59,12 @@ def create_transacao():
     action_code = data.get('action_code')
     action_quantity = data.get('action_quantity')
     unitary_price = data.get('preco_unitario')
+
+    if client_id is None:
+        return jsonify({"error": "client_id is required"}), 400
+
+    if not validate_uuid(client_id):
+        return jsonify({"error": "Invalid client_id format"}), 400
 
     if not validate_client_id(client_id):
         return jsonify({"error": "Invalid client ID"}), 404
