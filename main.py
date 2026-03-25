@@ -7,9 +7,7 @@ from flask_pymongo import PyMongo
 
 app = Flask(__name__)
 
-mongo_host = os.environ.get("MONGO_URL")
-app.config["MONGO_URI"] = f"mongodb://{mongo_host}:27017/transacao_db"
-
+app.config["MONGO_URI"] = "mongodb://mongo-connections:27017/transacao_db"
 mongo = PyMongo(app)
 
 def validate_uuid(u):
@@ -31,7 +29,7 @@ def validate_client_id(client_id):
     
 @app.route('/transacao', methods=['GET'])
 def get_transacao():
-    transacoes_cursor = mongo.db.transacoes.find().sort("created_at", -1)
+    transacoes_cursor = transacoes_cursor = mongo.db.transacoes.find().sort("date", -1)
     result = []
     for transacao in transacoes_cursor:
         t_out = {
@@ -47,11 +45,11 @@ def get_transacao():
 
 @app.route('/transacao/<transacao_id>', methods=['GET'])
 def get_transacao_by_id(transacao_id):
-    
+
     if not validate_uuid(transacao_id):
         return jsonify({"error": "Invalid transacao ID"}), 400
 
-    transacao = mongo.db.transacoes.find_one({"_id": uuid.UUID(transacao_id)})
+    transacao = mongo.db.transacoes.find_one({"_id": transacao_id})
     if not transacao:
         return jsonify({"error": "Transacao not found"}), 404
 
@@ -106,7 +104,6 @@ def create_transacao():
     return jsonify({
         "message": "Transação created successfully.",
         "transacao_id": transacao["_id"],
-        "mongo_id": str(res.inserted_id)
     }), 201
 
 @app.route('/transacao/<transacao_id>', methods=['DELETE'])
@@ -114,7 +111,7 @@ def delete_transacao(transacao_id):
     if not validate_uuid(transacao_id):
         return jsonify({"error": "Invalid transacao ID"}), 400
 
-    result = mongo.db.transacoes.delete_one({"_id": uuid.UUID(transacao_id)})
+    result = mongo.db.transacoes.delete_one({"_id": transacao_id})
     if result.deleted_count == 0:
         return jsonify({"error": "Transacao not found"}), 404
 
