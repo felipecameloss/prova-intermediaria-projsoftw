@@ -79,8 +79,8 @@ def create_transacao():
     if not validate_uuid(client_id):
         return jsonify({"error": "Invalid client_id format"}), 400
 
-    if not validate_client_id(client_id):
-        return jsonify({"error": "Invalid client ID"}), 404
+    # if not validate_client_id(client_id):
+    #     return jsonify({"error": "Invalid client ID"}), 404
 
     if action_code is None or action_quantity is None or unitary_price is None:
         return jsonify({"error": "action_code, action_quantity and preco_unitario are required"}), 400
