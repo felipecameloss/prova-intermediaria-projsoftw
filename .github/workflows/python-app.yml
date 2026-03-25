@@ -54,4 +54,4 @@ jobs:
         script: |
           docker stop pi-projsoftw
           docker rm --force pi-projsoftw
-          docker run  -d -p 8081:5000 --network=rede --name pi-projsoftw felipecameloss/pi-projsoftw:${{ github.sha }}
+          docker run  -d -p 8081:5000 --network=rede -e MONGO_URL=${{ secrets.MONGO_URL }} --name pi-projsoftw felipecameloss/pi-projsoftw:${{ github.sha }}
