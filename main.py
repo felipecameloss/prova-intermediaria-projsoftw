@@ -34,8 +34,15 @@ def get_transacao():
     transacoes_cursor = mongo.db.transacoes.find().sort("created_at", -1)
     result = []
     for transacao in transacoes_cursor:
-        transacao['_id'] = str(transacao['_id'])
-        result.append(transacao)
+        t_out = {
+            "_id": str(transacao["_id"]),
+            "client_id": transacao["client_id"],
+            "action_code": transacao["action_code"],
+            "action_quantity": transacao["action_quantity"],
+            "preco_unitario": transacao["preco_unitario"],
+            "total_price": transacao["total_price"],
+        }
+        result.append(t_out)
     return jsonify(result), 200
 
 @app.route('/transacao/<transacao_id>', methods=['GET'])
@@ -47,8 +54,15 @@ def get_transacao_by_id(transacao_id):
     if not transacao:
         return jsonify({"error": "Transacao not found"}), 404
 
-    transacao['_id'] = str(transacao['_id'])
-    return jsonify(transacao), 200
+    t_out = {
+        "_id": str(transacao["_id"]),
+        "client_id": transacao["client_id"],
+        "action_code": transacao["action_code"],
+        "action_quantity": transacao["action_quantity"],
+        "preco_unitario": transacao["preco_unitario"],
+        "total_price": transacao["total_price"],
+    }
+    return jsonify(t_out), 200
 
 @app.route('/transacao', methods=['POST'])
 def create_transacao():    
