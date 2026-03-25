@@ -1,0 +1,100 @@
+from flask import Flask, request, jsonify
+import os
+import uuid
+from datetime import datetime, timezone
+import requests
+from flask_pymongo import PyMongo
+
+app = Flask(__name__)
+
+mongo_host = os.environ.get("MONGO_URL", "localhost")
+app.config["MONGO_URI"] = f"mongodb://mongo-connections:27017/post_db"
+USERS_API_BASE_URL = os.environ.get("USERS_API_BASE_URL", "http://18.228.48.67")
+
+mongo = PyMongo(app)
+
+def validate_uuid(u):
+    try:
+        uuid.UUID(str(u))
+        return True
+    except Exception:
+        return False
+
+def validate_client_id(client_id):
+    url = f"{USERS_API_BASE_URL}/users/{client_id}"
+
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        return True
+    else:
+        return False
+    
+@app.route('/transacao', methods=['GET'])
+def get_transacao():
+    transacoes_cursor = mongo.db.transacoes.find()
+    result = []
+    for transacao in transacoes_cursor:
+        transacao['_id'] = str(transacao['_id'])
+        result.append(transacao)
+    return jsonify(result), 200
+
+@app.route('/transacao/<transacao_id>', methods=['GET'])
+def get_transacao_by_id(transacao_id):
+    if not validate_uuid(transacao_id):
+        return jsonify({"error": "Invalid transacao ID"}), 400
+
+    transacao = mongo.db.transacoes.find_one({"_id": uuid.UUID(transacao_id)})
+    if not transacao:
+        return jsonify({"error": "Transacao not found"}), 404
+
+    transacao['_id'] = str(transacao['_id'])
+    return jsonify(transacao), 200
+
+@app.route('/transacao', methods=['POST'])
+def create_transacao():    
+
+    data = request.get_json() or {}
+    client_id = data.get('client_id')
+    action_code = data.get('action_code')
+    action_quantity = data.get('action_quantity')
+    unitary_price = data.get('preco_unitario')
+
+    if not validate_client_id(client_id):
+        return jsonify({"error": "Invalid client ID"}), 404
+
+    if action_code is None or action_quantity is None or unitary_price is None:
+        return jsonify({"error": "action_code, action_quantity and preco_unitario are required"}), 400
+
+    if not isinstance(action_quantity, (int, float)) or not isinstance(unitary_price, (int, float)):
+        return jsonify({"error": "action_quantity and preco_unitario must be numeric"}), 400
+
+    total_price = action_quantity * unitary_price
+    date = datetime.now(timezone.utc)
+
+    transacao = {
+        "_id": str(uuid.uuid4()),
+        "client_id": client_id,
+        "action_code": action_code,
+        "action_quantity": action_quantity,
+        "preco_unitario": unitary_price,
+        "total_price": total_price,
+        "date": date.isoformat(),
+    }
+
+    mongo.db.transacoes.insert_one(transacao)
+    return jsonify(transacao), 201
+
+@app.route('/transacao/<transacao_id>', methods=['DELETE'])
+def delete_transacao(transacao_id):
+    if not validate_uuid(transacao_id):
+        return jsonify({"error": "Invalid transacao ID"}), 400
+
+    result = mongo.db.transacoes.delete_one({"_id": uuid.UUID(transacao_id)})
+    if result.deleted_count == 0:
+        return jsonify({"error": "Transacao not found"}), 404
+
+    return jsonify({"message": "Transacao deleted successfully"}), 200
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
