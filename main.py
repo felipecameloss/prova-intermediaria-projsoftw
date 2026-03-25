@@ -8,8 +8,7 @@ from flask_pymongo import PyMongo
 app = Flask(__name__)
 
 mongo_host = os.environ.get("MONGO_URL", "localhost")
-app.config["MONGO_URI"] = f"mongodb://{mongo_host}:27017/post_db"
-USERS_API_BASE_URL = os.environ.get("USERS_API_BASE_URL", "http://18.228.48.67")
+app.config["MONGO_URI"] = f"mongodb://{mongo_host}:27017/transacao_db"
 
 mongo = PyMongo(app)
 
@@ -21,7 +20,7 @@ def validate_uuid(u):
         return False
 
 def validate_client_id(client_id):
-    url = f"{USERS_API_BASE_URL}/users/{client_id}"
+    url = f"http://18.228.48.67/users/{client_id}"
     try:
         response = requests.get(url, timeout=5)
         print("validate_client_id:", response.status_code, response.text)
@@ -32,7 +31,7 @@ def validate_client_id(client_id):
     
 @app.route('/transacao', methods=['GET'])
 def get_transacao():
-    transacoes_cursor = mongo.db.transacoes.find()
+    transacoes_cursor = mongo.db.transacoes.find().sort("created_at", -1)
     result = []
     for transacao in transacoes_cursor:
         transacao['_id'] = str(transacao['_id'])
