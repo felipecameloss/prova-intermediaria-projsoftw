@@ -8,7 +8,7 @@ from flask_pymongo import PyMongo
 app = Flask(__name__)
 
 mongo_host = os.environ.get("MONGO_URL", "localhost")
-app.config["MONGO_URI"] = f"mongodb://mongo-connections:27017/post_db"
+app.config["MONGO_URI"] = f"mongodb://{mongo_host}:27017/post_db"
 USERS_API_BASE_URL = os.environ.get("USERS_API_BASE_URL", "http://18.228.48.67")
 
 mongo = PyMongo(app)
