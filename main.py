@@ -47,6 +47,7 @@ def get_transacao():
 
 @app.route('/transacao/<transacao_id>', methods=['GET'])
 def get_transacao_by_id(transacao_id):
+    
     if not validate_uuid(transacao_id):
         return jsonify({"error": "Invalid transacao ID"}), 400
 
@@ -102,7 +103,11 @@ def create_transacao():
     }
 
     mongo.db.transacoes.insert_one(transacao)
-    return jsonify(transacao), 201
+    return jsonify({
+        "message": "Transação created successfully.",
+        "transacao_id": transacao["_id"],
+        "mongo_id": str(res.inserted_id)
+    }), 201
 
 @app.route('/transacao/<transacao_id>', methods=['DELETE'])
 def delete_transacao(transacao_id):
